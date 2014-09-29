@@ -37,8 +37,10 @@ bool CTreadPool::InitialPool(unsigned int nThreadNum)
     for (unsigned int i = 0; (i < nThreadNum) && (i < MAX_THREAD_NUM); i++ )
     {
         CThread* pThread = CreateThread();
-        if (!pThread)
+        if ( pThread->Start(this) != true)
         {
+            delete pThread;
+            trace_log(ERR, "Creating thread is failed");
             return false;
         }
         time_t CurTime = 0;
@@ -52,12 +54,6 @@ bool CTreadPool::InitialPool(unsigned int nThreadNum)
 CThread* CTreadPool::CreateThread()
 {
     CThread* pThread = new CThread();
-    if ( pThread->Start(this) != true)
-    {
-        delete pThread;
-        trace_log(ERR, "Creating thread is failed");
-        return NULL;
-    }
     return pThread;
 }
 void CTreadPool::Run()
@@ -126,4 +122,5 @@ void CTreadPool::ReleaseAllThread(mapThreadPool_t& ThreadPool)
         CThread* pThread = iter->first;
         delete pThread;
     }
+    ThreadPool.clear();
 }

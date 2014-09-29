@@ -15,9 +15,8 @@
 #include "log.h"
 #include "Thread.h"
 
-CThread::CThread():m_pCTreadPool(NULL),
-                               m_bStart(false),m_bNoticeThreadExitFlag(false)//,
-                               //m_bThreadExitFlag(false)
+CThread::CThread():m_pCTreadPool(NULL), m_bStart(false),
+                  m_bNoticeThreadExitFlag(false), m_bThreadExitFlag(false)
 {
 }
 
@@ -71,7 +70,7 @@ void* CThread::startHook(void* pInput)
         if (pThreadInstance->m_bNoticeThreadExitFlag)
         {
             trace_log(DBG,"thread id: %d exit", pThreadInstance->m_pid);
-            //pThreadInstance->m_bThreadExitFlag = true;
+            pThreadInstance->m_bThreadExitFlag = true;
             pthread_exit(NULL);
         }
         pThreadInstance->Run();
@@ -89,6 +88,7 @@ void CThread::Active()
 {
     if (!m_bStart)
     {
+        trace_log(ERR,"thread id: %d isn't running", m_pid);
         return;
     }
     sem_post(&m_sem);
@@ -105,5 +105,16 @@ void CThread::ExitThread()
     }
     m_bNoticeThreadExitFlag = true;
     sem_post(&m_sem);
-    //usleep(1000*1000);
+    //µÈ´ýÒ»Ãë
+    unsigned int nCount = 0;
+    while(!m_bThreadExitFlag && nCount < 1000)
+    {
+        usleep(1000);
+        nCount++;
+    }
+
+    if(!m_bThreadExitFlag)
+    {
+        pthread_cancel(m_thread);
+    }
 }
