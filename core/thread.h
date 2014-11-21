@@ -13,13 +13,12 @@ public:
     bool Start(CTreadPool* pInputThreadPool = NULL);
     //激活线程
     void Active();
-    //一定要显示调用退出线程，析构并不能退出线程
-    void ExitThread();
     virtual void Run();
 private:
     static void* startHook(void* pInput);
     CThread(CThread&);
     CThread& operator =(CThread &);
+    void ExitThread();
 protected:
     CTreadPool* m_pCTreadPool;
 private:

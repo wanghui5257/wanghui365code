@@ -77,7 +77,7 @@ void* CThread::startHook(void* pInput)
 
         if (pThreadInstance->m_pCTreadPool != NULL)
         {
-            pThreadInstance->m_pCTreadPool->ReleaseThread(pThreadInstance);
+            pThreadInstance->m_pCTreadPool->ReleaseFreeThread(pThreadInstance);
         }
     }
 
@@ -112,7 +112,7 @@ void CThread::ExitThread()
         usleep(1000);
         nCount++;
     }
-
+    //强制杀死线程
     if(!m_bThreadExitFlag)
     {
         pthread_cancel(m_thread);
