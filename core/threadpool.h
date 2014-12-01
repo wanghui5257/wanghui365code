@@ -33,6 +33,7 @@ private:
     void ReleaseAllThread(mapThreadPool_t & ThreadPool);
     //检测线程池中的线程是否运行超时，线程全忙时增加线程
     static void CheckAllThread(CTreadPool* pThreadPool);
+    void DeleteOverTimeThreadFromBusyArray();
 private:
     mapThreadPool_t m_FreeThreadArray;
     mapThreadPool_t m_BusyThreadArray;

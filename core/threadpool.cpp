@@ -135,18 +135,25 @@ const unsigned int CTreadPool::GetFreeThreadNum()
     Lock lock(m_Mutex);
     return m_FreeThreadArray.size();
 }
-void CTreadPool::CheckAllThread(CTreadPool* pThreadPool)
+void CTreadPool::DeleteOverTimeThreadFromBusyArray()
 {
+    Lock lock(m_Mutex);
     //check all thread£¬ if the thread is overtime£¬ release it
-    mapThreadPool_t::iterator iter = pThreadPool->m_BusyThreadArray.begin();
-	mapThreadPool_t::iterator iterEnd = pThreadPool->m_BusyThreadArray.end();
+    mapThreadPool_t::iterator iter = m_BusyThreadArray.begin();
+	mapThreadPool_t::iterator iterEnd = m_BusyThreadArray.end();
     for (;iter != iterEnd;++iter)
     {
-        if (iter->second > pThreadPool->m_nThreadRunOverTime)
+        if (iter->second > m_nThreadRunOverTime)
         {
-
+            CThread* pThread = iter->first;
+            delete pThread;
+            m_BusyThreadArray.erase(pThread);
         }
     }
-    /*if total number of free thread,add one thread into pool(only total threads
+}
+void CTreadPool::CheckAllThread(CTreadPool* pThreadPool)
+{
+    /*if total number of free thread is 0,add one thread into pool(only total threads
     less than the max number of thread*/
+    pThreadPool->DeleteOverTimeThreadFromBusyArray();
 }
