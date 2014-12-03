@@ -14,7 +14,7 @@
 #include "log.h"
 #include "thread.h"
 #include "threadpool.h"
-CTreadPool::CTreadPool():m_CurNodeNum(0), m_Mutex(), m_bInitalFlag(false)
+CTreadPool::CTreadPool(): m_CurNodeNum(0), m_Mutex(), m_bInitalFlag(false)
 {
     m_FreeThreadArray.clear();
     m_BusyThreadArray.clear();
@@ -38,16 +38,10 @@ bool CTreadPool::InitialPool(unsigned int nThreadNum, unsigned int nOverTime)
     for (unsigned int i = 0; (i < nThreadNum) && (i < MAX_THREAD_NUM); i++ )
     {
         CThread* pThread = CreateThread();
-        if ( pThread->Start(this) != true)
+        if (!pThread)
         {
-            delete pThread;
-            trace_log(ERR, "Creating thread is failed");
             return false;
         }
-        time_t CurTime = 0;
-        time(&CurTime);
-        m_FreeThreadArray[pThread] = CurTime;
-
     }
     m_bInitalFlag = true;
     return true;
@@ -55,6 +49,15 @@ bool CTreadPool::InitialPool(unsigned int nThreadNum, unsigned int nOverTime)
 CThread* CTreadPool::CreateThread()
 {
     CThread* pThread = new CThread();
+    if ( !pThread->Start(this) )
+    {
+        delete pThread;
+        trace_log(ERR, "Creating thread is failed");
+        return NULL;
+    }
+    time_t CurTime = 0;
+    time(&CurTime);
+    m_FreeThreadArray[pThread] = CurTime;
     return pThread;
 }
 void CTreadPool::Run()
@@ -75,8 +78,8 @@ void* CTreadPool::PopData()
     {
         return NULL;
     }
-    void* pThread = m_Data_Pool[m_CurNodeNum -1];
-    m_Data_Pool[m_CurNodeNum -1] = NULL;
+    void* pThread = m_Data_Pool[m_CurNodeNum - 1];
+    m_Data_Pool[m_CurNodeNum - 1] = NULL;
     m_CurNodeNum--;
     return pThread;
 }
@@ -118,7 +121,7 @@ void CTreadPool::ReleaseDataInPool()
 void CTreadPool::ReleaseAllThread(mapThreadPool_t& ThreadPool)
 {
     mapThreadPool_t::iterator iter = ThreadPool.begin();
-    for (;iter != ThreadPool.end();++iter)
+    for (; iter != ThreadPool.end(); ++iter)
     {
         CThread* pThread = iter->first;
         delete pThread;
@@ -140,8 +143,8 @@ void CTreadPool::DeleteOverTimeThreadFromBusyArray()
     Lock lock(m_Mutex);
     //check all thread£¬ if the thread is overtime£¬ release it
     mapThreadPool_t::iterator iter = m_BusyThreadArray.begin();
-	mapThreadPool_t::iterator iterEnd = m_BusyThreadArray.end();
-    for (;iter != iterEnd;++iter)
+    mapThreadPool_t::iterator iterEnd = m_BusyThreadArray.end();
+    for (; iter != iterEnd; ++iter)
     {
         if (iter->second > m_nThreadRunOverTime)
         {
@@ -153,7 +156,13 @@ void CTreadPool::DeleteOverTimeThreadFromBusyArray()
 }
 void CTreadPool::CheckAllThread(CTreadPool* pThreadPool)
 {
+    //traversing all threads, delete one thread when it is overtime.
+    pThreadPool->DeleteOverTimeThreadFromBusyArray();
     /*if total number of free thread is 0,add one thread into pool(only total threads
     less than the max number of thread*/
-    pThreadPool->DeleteOverTimeThreadFromBusyArray();
+    if (pThreadPool->GetTotalThreadNum() < MAX_THREAD_NUM)
+    {
+        (void)pThreadPool->CreateThread();
+    }
+
 }
